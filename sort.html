@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .bars-container {
+            height: 300px;
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+            gap: 2px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .bar {
+            flex: 1;
+            background-color: #2196F3;
+            transition: height 0.3s ease;
+        }
+
+        .bar.comparing {
+            background-color: #FFC107;
+        }
+
+        .bar.sorted {
+            background-color: #4CAF50;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .speed-control {
+            margin: 10px 0;
+        }
+
+        #speedRange {
+            width: 200px;
+        }
+
+        .sorting-explanations {
+            margin: 20px 0;
+            display: grid;
+            gap: 15px;
+        }
+
+        .explanation {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .explanation h3 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+
+        .explanation p {
+            margin-bottom: 0;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Visualisasi Algoritma Sorting</h1>
+        
+        <div class="sorting-explanations">
+            <div class="explanation">
+                <h3>🫧 Bubble Sort</h3>
+                <p>Bayangkan kamu punya kartu angka acak. Kamu bandingkan dua kartu bersebelahan, kalau kartu kiri lebih besar dari kanan, tukar posisinya. Lakukan terus sampai semua kartu urut dari kecil ke besar.</p>
+            </div>
+
+            <div class="explanation">
+                <h3>🎯 Selection Sort</h3>
+                <p>Cari angka yang paling kecil, taruh di posisi pertama. Lalu dari sisa angka, cari lagi yang paling kecil, taruh di posisi kedua. Begitu seterusnya sampai selesai.</p>
+            </div>
+
+            <div class="explanation">
+                <h3>🃏 Insertion Sort</h3>
+                <p>Ambil satu angka, masukkan ke tempat yang tepat. Seperti kamu menyusun kartu dari tangan ke meja, satu per satu, sampai semua kartu tersusun rapi.</p>
+            </div>
+
+            <div class="explanation">
+                <h3>🔄 Merge Sort</h3>
+                <p>Bagi semua angka jadi dua kelompok. Urutkan masing-masing kelompok, lalu gabungkan dengan cara memilih angka terkecil dari kedua kelompok.</p>
+            </div>
+
+            <div class="explanation">
+                <h3>⚡ Quick Sort</h3>
+                <p>Pilih satu angka sebagai pembanding. Angka yang lebih kecil taruh di kiri, yang lebih besar taruh di kanan. Lakukan hal yang sama pada kelompok kiri dan kanan sampai selesai.</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="generateNewArray()">Generate Array Baru</button>
+            <button onclick="startBubbleSort()">Bubble Sort</button>
+            <button onclick="startSelectionSort()">Selection Sort</button>
+            <button onclick="startInsertionSort()">Insertion Sort</button>
+            <button onclick="startMergeSort()">Merge Sort</button>
+            <button onclick="startQuickSort()">Quick Sort</button>
+        </div>
+
+        <div class="speed-control">
+            <label for="speedRange">Kecepatan:</label>
+            <input type="range" id="speedRange" min="1" max="100" value="50">
+        </div>
+
+        <div class="bars-container" id="barsContainer"></div>
+
+        <div class="info">
+            <h3>Status:</h3>
+            <p id="status">Siap memulai pengurutan...</p>
+            <p>Perbandingan: <span id="comparisons">0</span></p>
+            <p>Pertukaran: <span id="swaps">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        let array = [];
+        let arrayBars = [];
+        let isSorting = false;
+        let comparisons = 0;
+        let swaps = 0;
+
+        // Initialize
+        function init() {
+            generateNewArray();
+        }
+
+        function generateNewArray() {
+            if (isSorting) return;
+            array = [];
+            for (let i = 0; i < 30; i++) {
+                array.push(Math.floor(Math.random() * 100) + 1);
+            }
+            updateBars();
+            resetCounters();
+        }
+
+        function updateBars() {
+            const container = document.getElementById('barsContainer');
+            container.innerHTML = '';
+            arrayBars = [];
+            
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${value * 2}px`;
+                container.appendChild(bar);
+                arrayBars.push(bar);
+            });
+        }
+
+        function resetCounters() {
+            comparisons = 0;
+            swaps = 0;
+            updateCounters();
+        }
+
+        function updateCounters() {
+            document.getElementById('comparisons').textContent = comparisons;
+            document.getElementById('swaps').textContent = swaps;
+        }
+
+        function setStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        function sleep(ms) {
+            const speed = document.getElementById('speedRange').value;
+            return new Promise(resolve => setTimeout(resolve, ms * (101 - speed) / 10));
+        }
+
+        async function swap(i, j) {
+            if (i === j) return;
+            
+            // Visual swap
+            const temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+
+            // Update heights
+            const tempHeight = arrayBars[i].style.height;
+            arrayBars[i].style.height = arrayBars[j].style.height;
+            arrayBars[j].style.height = tempHeight;
+
+            swaps++;
+            updateCounters();
+            await sleep(50);
+        }
+
+        // Bubble Sort
+        async function startBubbleSort() {
+            if (isSorting) return;
+            isSorting = true;
+            setStatus('Menjalankan Bubble Sort...');
+            
+            for (let i = 0; i < array.length; i++) {
+                for (let j = 0; j < array.length - i - 1; j++) {
+                    arrayBars[j].classList.add('comparing');
+                    arrayBars[j + 1].classList.add('comparing');
+                    
+                    comparisons++;
+                    updateCounters();
+                    await sleep(50);
+
+                    if (array[j] > array[j + 1]) {
+                        await swap(j, j + 1);
+                    }
+
+                    arrayBars[j].classList.remove('comparing');
+                    arrayBars[j + 1].classList.remove('comparing');
+                }
+                arrayBars[array.length - i - 1].classList.add('sorted');
+            }
+
+            setStatus('Bubble Sort selesai!');
+            isSorting = false;
+        }
+
+        // Selection Sort
+        async function startSelectionSort() {
+            if (isSorting) return;
+            isSorting = true;
+            setStatus('Menjalankan Selection Sort...');
+
+            for (let i = 0; i < array.length; i++) {
+                let minIdx = i;
+                arrayBars[i].classList.add('comparing');
+
+                for (let j = i + 1; j < array.length; j++) {
+                    arrayBars[j].classList.add('comparing');
+                    comparisons++;
+                    updateCounters();
+                    await sleep(50);
+
+                    if (array[j] < array[minIdx]) {
+                        arrayBars[minIdx].classList.remove('comparing');
+                        minIdx = j;
+                        arrayBars[minIdx].classList.add('comparing');
+                    } else {
+                        arrayBars[j].classList.remove('comparing');
+                    }
+                }
+
+                await swap(i, minIdx);
+                arrayBars[i].classList.remove('comparing');
+                arrayBars[minIdx].classList.remove('comparing');
+                arrayBars[i].classList.add('sorted');
+            }
+
+            setStatus('Selection Sort selesai!');
+            isSorting = false;
+        }
+
+        // Insertion Sort
+        async function startInsertionSort() {
+            if (isSorting) return;
+            isSorting = true;
+            setStatus('Menjalankan Insertion Sort...');
+
+            arrayBars[0].classList.add('sorted');
+            
+            for (let i = 1; i < array.length; i++) {
+                let j = i;
+                arrayBars[i].classList.add('comparing');
+                await sleep(50);
+
+                while (j > 0 && array[j - 1] > array[j]) {
+                    comparisons++;
+                    updateCounters();
+                    await swap(j, j - 1);
+                    j--;
+                }
+
+                arrayBars[i].classList.remove('comparing');
+                arrayBars[i].classList.add('sorted');
+            }
+
+            setStatus('Insertion Sort selesai!');
+            isSorting = false;
+        }
+
+        // Merge Sort
+        async function startMergeSort() {
+            if (isSorting) return;
+            isSorting = true;
+            setStatus('Menjalankan Merge Sort...');
+
+            await mergeSort(0, array.length - 1);
+
+            arrayBars.forEach(bar => bar.classList.add('sorted'));
+            setStatus('Merge Sort selesai!');
+            isSorting = false;
+        }
+
+        async function mergeSort(start, end) {
+            if (start >= end) return;
+
+            const mid = Math.floor((start + end) / 2);
+            await mergeSort(start, mid);
+            await mergeSort(mid + 1, end);
+            await merge(start, mid, end);
+        }
+
+        async function merge(start, mid, end) {
+            const leftArray = array.slice(start, mid + 1);
+            const rightArray = array.slice(mid + 1, end + 1);
+            let i = 0, j = 0, k = start;
+
+            while (i < leftArray.length && j < rightArray.length) {
+                arrayBars[k].classList.add('comparing');
+                comparisons++;
+                updateCounters();
+                await sleep(50);
+
+                if (leftArray[i] <= rightArray[j]) {
+                    array[k] = leftArray[i];
+                    arrayBars[k].style.height = `${leftArray[i] * 2}px`;
+                    i++;
+                } else {
+                    array[k] = rightArray[j];
+                    arrayBars[k].style.height = `${rightArray[j] * 2}px`;
+                    j++;
+                }
+                
+                arrayBars[k].classList.remove('comparing');
+                k++;
+                swaps++;
+                updateCounters();
+            }
+
+            while (i < leftArray.length) {
+                array[k] = leftArray[i];
+                arrayBars[k].style.height = `${leftArray[i] * 2}px`;
+                i++;
+                k++;
+                swaps++;
+                updateCounters();
+                await sleep(50);
+            }
+
+            while (j < rightArray.length) {
+                array[k] = rightArray[j];
+                arrayBars[k].style.height = `${rightArray[j] * 2}px`;
+                j++;
+                k++;
+                swaps++;
+                updateCounters();
+                await sleep(50);
+            }
+        }
+
+        // Quick Sort
+        async function startQuickSort() {
+            if (isSorting) return;
+            isSorting = true;
+            setStatus('Menjalankan Quick Sort...');
+
+            await quickSort(0, array.length - 1);
+
+            arrayBars.forEach(bar => bar.classList.add('sorted'));
+            setStatus('Quick Sort selesai!');
+            isSorting = false;
+        }
+
+        async function quickSort(low, high) {
+            if (low < high) {
+                const pi = await partition(low, high);
+                await quickSort(low, pi - 1);
+                await quickSort(pi + 1, high);
+            }
+        }
+
+        async function partition(low, high) {
+            const pivot = array[high];
+            arrayBars[high].classList.add('comparing');
+            let i = low - 1;
+
+            for (let j = low; j < high; j++) {
+                arrayBars[j].classList.add('comparing');
+                comparisons++;
+                updateCounters();
+                await sleep(50);
+
+                if (array[j] < pivot) {
+                    i++;
+                    await swap(i, j);
+                }
+                arrayBars[j].classList.remove('comparing');
+            }
+
+            await swap(i + 1, high);
+            arrayBars[high].classList.remove('comparing');
+            return i + 1;
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
